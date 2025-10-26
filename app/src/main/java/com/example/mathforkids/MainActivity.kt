@@ -16,6 +16,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mathforkids.ui.theme.MathForKidsTheme
 import kotlin.random.Random
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.graphics.Brush
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
+
+
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,11 +33,25 @@ class MainActivity : ComponentActivity() {
             MathForKidsTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = Color(0xFFFFF8E1)
+                    color = Color.Transparent
                 ) {
-                    MathGameScreen()
-                }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color(0xFFFFF3E0), // cam nhạt
+                                        Color(0xFFFFE0B2), // vàng pastel
+                                        Color(0xFFFFCCBC)  // hồng nhạt
+                                    )
+                                )
+                            )
+                    ) {
+                        MathGameScreen()
+                    }
             }
+               }
         }
     }
 }
@@ -57,41 +80,81 @@ fun MathGameScreen() {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Math For Kids 🎯",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF6A1B9A)
+            text = "🎯 Math For Kids 🎯",
+            fontSize = 32.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = Color(0xFF7E57C2),
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .clip(RoundedCornerShape(50.dp))
+                .background(Color(0xFFE1BEE7))
+                .padding(horizontal = 20.dp, vertical = 10.dp)
         )
 
         Spacer(modifier = Modifier.height(40.dp))
-
+//  Phép toán
         Text(
             text = "$num1 + $num2 = ?",
-            fontSize = 36.sp,
+            fontSize = 40.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF388E3C)
+            color = Color(0xFF43A047)
         )
 
-        Spacer(modifier = Modifier.height(30.dp))
-
+        Spacer(modifier = Modifier.height(40.dp))
+        // 🔘 Các nút đáp án
         options.forEach { option ->
             Button(
                 onClick = {
-                    feedback = if (option == answer) "🎉 Correct!" else "❌ Try again!"
-                    if (option == answer) nextQuestion()
+                    if (option == answer) {
+                        feedback = "🎉 Bé giỏi quá!"
+                        // ✨ Thêm delay 1 giây rồi mới đổi câu
+                        CoroutineScope(Dispatchers.Main).launch {
+                            delay(1000)
+                            nextQuestion()
+                        }
+                    } else {
+                        feedback = "❌Bé thử lại nhé!"
+                    }
                 },
+
                 modifier = Modifier
-                    .fillMaxWidth(0.6f)
-                    .padding(vertical = 8.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF81D4FA))
+                    .fillMaxWidth(0.7f)
+                    .padding(vertical = 10.dp)
+                    .clip(RoundedCornerShape(50.dp)),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF81D4FA), // xanh baby
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(50.dp),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
             ) {
-                Text(option.toString(), fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    text = option.toString(),
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(vertical = 5.dp)
+                )
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
-        Text(text = feedback, fontSize = 24.sp)
+        Spacer(modifier = Modifier.height(25.dp))
+
+ //  Phản hồi
+        if (feedback.isNotEmpty()) {
+            Text(
+                text = feedback,
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (feedback.contains("Chính xác")) Color(0xFF43A047) else Color(0xFFE53935),
+                modifier = Modifier
+                    .clip(RoundedCornerShape(30.dp))
+                    .background(
+                        if (feedback.contains("Chính xác")) Color(0xFFC8E6C9)
+                        else Color(0xFFFFCDD2)
+                    )
+                    .padding(horizontal = 20.dp, vertical = 10.dp)
+            )
+        }
     }
 }
 
@@ -103,3 +166,12 @@ fun generateOptions(correctAnswer: Int): List<Int> {
     }
     return options.shuffled()
 }
+//Xem giao diện
+@Preview(showBackground = true)
+@Composable
+fun MathGamePreview() {
+    MathForKidsTheme {
+        MathGameScreen()
+    }
+}
+
