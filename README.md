@@ -5,7 +5,7 @@
 </p>
 
 Ứng dụng Android được xây dựng bằng **Kotlin + Jetpack Compose**, giúp trẻ 5 tuổi học toán (đếm, cộng, trừ) một cách trực quan và vui nhộn 🎨.  
-Phần backend (API) sử dụng **FastAPI (Python)** để cung cấp dữ liệu bài toán và lưu kết quả.
+Anh em vọc vạch frontend trước nhé 
 
 ---
 
