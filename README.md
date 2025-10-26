@@ -13,7 +13,7 @@ Một hệ thống ứng dụng Android (Kotlin) và backend (Python) được t
 ## 👥 Phân công vai trò (Team Roles)
 
 * **Backend Lead (Quân):** ☁️ Phụ trách logic API (`backend/app/routers/`), tổng thể kiến trúc backend, và phối hợp chặt chẽ với Frontend về API.
-* **Frontend Lead (Huy):** 📱 Phụ trách toàn bộ dự án Android (`frontend/`), bao gồm UI/UX (Jetpack Compose) và gọi API (Retrofit).
+* **Frontend Lead (Huy):** 📱 Phụ trách dự án Android (`frontend/`), bao gồm UI/UX (Jetpack Compose) và gọi API (Retrofit).
 * **Database Specialist (Nam):** 🗃️ Phụ trách logic cơ sở dữ liệu, bao gồm thiết kế CSDL, viết CRUD và định nghĩa schemas (`backend/app/db/`, `backend/app/crud/`, `backend/app/models/`).
 
 ## 🏗️ Cấu trúc thư mục (Project Structure)
