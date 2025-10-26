@@ -47,8 +47,8 @@ Dự án được chia thành hai thư mục cấp cao (`backend` và `frontend`
 │   └── .gitignore          # (Bỏ qua các file __pycache__, .env...)
 │
 │
-├── frontend/             # ⬅️ HUY (Frontend) làm việc chính ở đây
-│   │                     # (Toàn bộ dự án Android Studio của Huy sẽ nằm trong này)
+├── frontend/             # ⬅️ QUÂN và HUY (Frontend) làm việc chính ở đây
+│   │                     # (Toàn bộ dự án Android Studio của Quân & Huy sẽ nằm trong này)
 │   ├── app/              # Thư mục code Android (Kotlin)
 │   │   ├── src/main/java/com/behoctoan/
 │   │   │   ├── ui/                 # Chứa các màn hình (Compose)
