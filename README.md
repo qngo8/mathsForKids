@@ -1,71 +1,18 @@
-# 📚 Dự án: Bé Học Toán (Math for Kids)
+# 📱 Bé Học Toán (Math for Kids) — Frontend (Android)
 
 <p align="center">
-  <img src="https://skillicons.dev/icons?i=kotlin" alt="Kotlin"/>
-  <img src="https://skillicons.dev/icons?i=androidstudio" alt="Android Studio"/>
-  <img src="https://skillicons.dev/icons?i=python" alt="Python"/>
-  <img src="https://skillicons.dev/icons?i=fastapi" alt="FastAPI"/>
-  <img src="https://skillicons.dev/icons?i=jetpackcompose" alt="Jetpack Compose"/>
+  <img src="https://skillicons.dev/icons?i=kotlin,androidstudio,jetpackcompose,retrofit" alt="Kotlin, Android Studio, Jetpack Compose, Retrofit"/>
 </p>
 
-Một hệ thống ứng dụng Android (Kotlin) và backend (Python) được thiết kế để giúp trẻ 5 tuổi học toán cơ bản (đếm, cộng, trừ) một cách vui nhộn và tương tác.
+Ứng dụng Android được xây dựng bằng **Kotlin + Jetpack Compose**, giúp trẻ 5 tuổi học toán (đếm, cộng, trừ) một cách trực quan và vui nhộn 🎨.  
+Phần backend (API) sử dụng **FastAPI (Python)** để cung cấp dữ liệu bài toán và lưu kết quả.
 
-## 👥 Phân công vai trò (Team Roles)
+---
 
-* **Backend Lead (Quân):** ☁️ Phụ trách logic API (`backend/app/routers/`), tổng thể kiến trúc backend, và phối hợp chặt chẽ với Frontend về API.
-* **Frontend Lead (Huy):** 📱 Phụ trách dự án Android (`frontend/`), bao gồm UI/UX (Jetpack Compose) và gọi API (Retrofit).
-* **Database Specialist (Nam):** 🗃️ Phụ trách logic cơ sở dữ liệu, bao gồm thiết kế CSDL, viết CRUD và định nghĩa schemas (`backend/app/db/`, `backend/app/crud/`, `backend/app/models/`).
+## 🚀 Cách chạy bản demo trên Android Studio
 
-## 🏗️ Cấu trúc thư mục (Project Structure)
-
-Dự án được chia thành hai thư mục cấp cao (`backend` và `frontend`) để cho phép các nhóm phát triển độc lập và song song.
-
+### 1️⃣ Clone repo & chuyển sang branch `frontend`
 ```bash
-/be-hoc-toan (Repository)
-│
-├── backend/              # ⬅️ Quân (Backend) & Nam (Database) làm việc ở đây
-│   ├── app/              # Thư mục chứa logic chính của FastAPI
-│   │   ├── __init__.py
-│   │   ├── main.py         # File FastAPI chính (nơi chạy app)
-│   │   ├── routers/        # ⬅️ QUÂN: Nơi định nghĩa các API (ví dụ: /problems)
-│   │   │   ├── __init__.py
-│   │   │   └── problems.py   # Logic cho các bài toán
-│   │   │
-│   │   ├── models/         # ⬅️ NAM: Pydantic schemas (định nghĩa cấu trúc data)
-│   │   │   ├── __init__.py
-│   │   │   └── schemas.py    # Ví dụ: class MathProblem(BaseModel): ...
-│   │   │
-│   │   ├── crud/           # ⬅️ NAM: Logic tương tác vớI DB (CRUD)
-│   │   │   ├── __init__.py
-│   │   │   └── crud_problems.py # Hàm lấy bài toán từ DB, lưu câu trả lời...
-│   │   │
-│   │   └── db/             # ⬅️ NAM: Cài đặt và kết nối database (SQLAlchemy)
-│   │       ├── __init__.py
-│   │       └── database.py
-│   │
-│   ├── requirements.txt    # ⬅️ QUÂN: Danh sách thư viện Python (fastapi, uvicorn...)
-│   └── .gitignore          # (Bỏ qua các file __pycache__, .env...)
-│
-│
-├── frontend/             # ⬅️ QUÂN và HUY (Frontend) làm việc chính ở đây
-│   │                     # (Toàn bộ dự án Android Studio của Quân & Huy sẽ nằm trong này)
-│   ├── app/              # Thư mục code Android (Kotlin)
-│   │   ├── src/main/java/com/behoctoan/
-│   │   │   ├── ui/                 # Chứa các màn hình (Compose)
-│   │   │   │   └── math/
-│   │   │   │       └── MathScreen.kt
-│   │   │   ├── viewmodel/          # ViewModels (MVVM)
-│   │   │   │   └── MathViewModel.kt
-│   │   │   ├── data/
-│   │   │   │   ├── repository/     # Lớp Repository
-│   │   │   │   └── remote/         # ⬅️ HUY: Định nghĩa ApiService (Retrofit)
-│   │   │   │       └── ApiService.kt
-│   │   │   └── model/              # ⬅️ HUY: Data class (MathProblem.kt)
-│   │   ├── build.gradle.kts
-│   └── ... (Các file cấu hình Android Studio khác)
-│
-│
-├── docs/                 # Nơi viết tài liệu chung
-│   └── api_specification.md  # ⬅️ QUÂN & HUY: Thống nhất API response/request ở đây
-│
-└── README.md             # File tổng quan bạn đang đọc
+git clone https://github.com/qngo8/mathsForKids.git
+cd mathsForKids
+git checkout frontend
