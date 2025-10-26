@@ -1,19 +1,26 @@
-Dự án: Bé Học Toán (Math for Kids)
+# 📚 Dự án: Bé Học Toán (Math for Kids)
 
-Hệ thống ứng dụng Android (Kotlin) và backend (Python) giúp trẻ 5 tuổi học toán cơ bản (đếm, cộng, trừ) một cách vui nhộn và tương tác.
+<p align="center">
+  <img src="https://skillicons.dev/icons?i=kotlin" alt="Kotlin"/>
+  <img src="https://skillicons.dev/icons?i=androidstudio" alt="Android Studio"/>
+  <img src="https://skillicons.dev/icons?i=python" alt="Python"/>
+  <img src="https://skillicons.dev/icons?i=fastapi" alt="FastAPI"/>
+  <img src="https://skillicons.dev/icons?i=jetpackcompose" alt="Jetpack Compose"/>
+</p>
 
-👥 Phân công vai trò (Team Roles)
+Một hệ thống ứng dụng Android (Kotlin) và backend (Python) được thiết kế để giúp trẻ 5 tuổi học toán cơ bản (đếm, cộng, trừ) một cách vui nhộn và tương tác.
 
-Quân (Backend Lead): Phụ trách logic API (backend/app/routers/), tổng thể kiến trúc backend, và phối hợp chặt chẽ với Frontend về API.
+## 👥 Phân công vai trò (Team Roles)
 
-Huy (Frontend Lead): Phụ trách toàn bộ dự án Android (frontend/), bao gồm UI/UX (Jetpack Compose) và gọi API (Retrofit).
+* **Backend Lead (Quân):** ☁️ Phụ trách logic API (`backend/app/routers/`), tổng thể kiến trúc backend, và phối hợp chặt chẽ với Frontend về API.
+* **Frontend Lead (Huy):** 📱 Phụ trách toàn bộ dự án Android (`frontend/`), bao gồm UI/UX (Jetpack Compose) và gọi API (Retrofit).
+* **Database Specialist (Nam):** 🗃️ Phụ trách logic cơ sở dữ liệu, bao gồm thiết kế CSDL, viết CRUD và định nghĩa schemas (`backend/app/db/`, `backend/app/crud/`, `backend/app/models/`).
 
-Nam (Database Specialist): Phụ trách logic cơ sở dữ liệu, bao gồm thiết kế CSDL, viết CRUD (Create, Read, Update, Delete) và định nghĩa schemas (backend/app/db/, backend/app/crud/, backend/app/models/).
+## 🏗️ Cấu trúc thư mục (Project Structure)
 
-🏗️ Cấu trúc thư mục (Project Structure)
+Dự án được chia thành hai thư mục cấp cao (`backend` và `frontend`) để cho phép các nhóm phát triển độc lập và song song.
 
-Dự án được chia thành hai thư mục cấp cao: backend và frontend để cho phép phát triển độc lập và song song.
-
+```bash
 /be-hoc-toan (Repository)
 │
 ├── backend/              # ⬅️ Quân (Backend) & Nam (Database) làm việc ở đây
