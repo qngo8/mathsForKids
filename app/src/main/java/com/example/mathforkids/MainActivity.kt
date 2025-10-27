@@ -5,23 +5,26 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.Image
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mathforkids.ui.theme.MathForKidsTheme
-import kotlin.random.Random
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.graphics.Brush
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.*
+import kotlinx.coroutines.launch
+import kotlin.random.Random
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 
 
 
@@ -31,38 +34,176 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MathForKidsTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = Color.Transparent
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                brush = Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color(0xFFFFF3E0), // cam nhạt
-                                        Color(0xFFFFE0B2), // vàng pastel
-                                        Color(0xFFFFCCBC)  // hồng nhạt
-                                    )
-                                )
-                            )
-                    ) {
-                        MathGameScreen()
-                    }
+                AppNavigator()
             }
-               }
         }
     }
 }
 
 @Composable
-fun MathGameScreen() {
+fun AppNavigator() {
+    var currentScreen by remember { mutableStateOf("login") }
+    var registeredUsers = remember { mutableStateListOf<Pair<String, String>>() }
+    var currentUser by remember { mutableStateOf("") }
+
+    when (currentScreen) {
+        "login" -> LoginScreen(
+            onLogin = { username, password ->
+                val userExists = registeredUsers.any { it.first == username && it.second == password }
+                if (userExists) {
+                    currentUser = username
+                    currentScreen = "menu"
+                }
+            },
+            onNavigateToRegister = { currentScreen = "register" }
+        )
+
+        "register" -> RegisterScreen(
+            onRegister = { username, password ->
+                registeredUsers.add(username to password)
+                currentScreen = "login"
+            },
+            onBack = { currentScreen = "login" }
+        )
+
+        "menu" -> MainMenuScreen(
+            username = currentUser,
+            onNavigateToMath = { currentScreen = "math" },
+            onLogout = { currentScreen = "login" }
+        )
+
+        "math" -> MathGameScreen(onBack = { currentScreen = "menu" })
+    }
+}
+
+@Composable
+fun LoginScreen(onLogin: (String, String) -> Unit, onNavigateToRegister: () -> Unit) {
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf("") }
+
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.bg_login), // <-- tên resource đổi thành lowercase
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+
+        Column(
+            modifier = Modifier.align(Alignment.Center)
+                .offset(y = (-40).dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("Đăng nhập", fontSize = 32.sp, fontWeight = FontWeight.Bold)
+
+            Spacer(modifier = Modifier.height(30.dp))
+
+            OutlinedTextField(value = username, onValueChange = { username = it }, label = { Text("Tên người dùng") })
+            OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Mật khẩu") })
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Button(onClick = {
+                if (username.isNotEmpty() && password.isNotEmpty()) {
+                    onLogin(username, password)
+                } else {
+                    error = "Vui lòng nhập đủ thông tin!"
+                }
+            }) {
+                Text("Đăng nhập")
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            TextButton(onClick = onNavigateToRegister) {
+                Text("Chưa có tài khoản? Đăng ký ngay")
+            }
+
+            if (error.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(error, color = Color.Red)
+            }
+        }
+    }
+
+}
+
+@Composable
+fun RegisterScreen(onRegister: (String, String) -> Unit, onBack: () -> Unit) {
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(Color(0xFFFFF3E0), Color(0xFFFFCCBC))
+                )
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("📝 Đăng ký", fontSize = 32.sp, fontWeight = FontWeight.Bold)
+
+            Spacer(modifier = Modifier.height(30.dp))
+
+            OutlinedTextField(value = username, onValueChange = { username = it }, label = { Text("Tên người dùng") })
+            OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Mật khẩu") })
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Button(onClick = {
+                if (username.isNotEmpty() && password.isNotEmpty()) onRegister(username, password)
+            }) {
+                Text("Tạo tài khoản")
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            TextButton(onClick = onBack) {
+                Text("⬅ Quay lại đăng nhập")
+            }
+        }
+    }
+}
+
+@Composable
+fun MainMenuScreen(username: String, onNavigateToMath: () -> Unit, onLogout: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color(0xFFE1BEE7), Color(0xFFFFF8E1))
+                )
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("Xin chào, $username 👋", fontSize = 28.sp, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(40.dp))
+            Button(onClick = onNavigateToMath) { Text("🎯 Bé học Toán") }
+            Spacer(modifier = Modifier.height(20.dp))
+            Button(onClick = onLogout, colors = ButtonDefaults.buttonColors(containerColor = Color.Red)) {
+                Text("Đăng xuất", color = Color.White)
+            }
+        }
+    }
+}
+
+@Composable
+fun MathGameScreen(onBack: () -> Unit) {
     var num1 by remember { mutableStateOf(Random.nextInt(1, 10)) }
     var num2 by remember { mutableStateOf(Random.nextInt(1, 10)) }
     var answer by remember { mutableStateOf(num1 + num2) }
     var options by remember { mutableStateOf(generateOptions(answer)) }
     var feedback by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
 
     fun nextQuestion() {
         num1 = Random.nextInt(1, 10)
@@ -75,103 +216,66 @@ fun MathGameScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color(0xFFFFF3E0), Color(0xFFFFE0B2), Color(0xFFFFCCBC))
+                )
+            )
             .padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(
-            text = "🎯 Math For Kids 🎯",
-            fontSize = 32.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = Color(0xFF7E57C2),
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .clip(RoundedCornerShape(50.dp))
-                .background(Color(0xFFE1BEE7))
-                .padding(horizontal = 20.dp, vertical = 10.dp)
-        )
+        Text("🎯 Math For Kids 🎯", fontSize = 32.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF7E57C2))
 
         Spacer(modifier = Modifier.height(40.dp))
-//  Phép toán
-        Text(
-            text = "$num1 + $num2 = ?",
-            fontSize = 40.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF43A047)
-        )
+
+        Text("$num1 + $num2 = ?", fontSize = 40.sp, fontWeight = FontWeight.Bold, color = Color(0xFF43A047))
 
         Spacer(modifier = Modifier.height(40.dp))
-        // 🔘 Các nút đáp án
+
         options.forEach { option ->
             Button(
                 onClick = {
                     if (option == answer) {
                         feedback = "🎉 Bé giỏi quá!"
-                        // ✨ Thêm delay 1 giây rồi mới đổi câu
-                        CoroutineScope(Dispatchers.Main).launch {
+                        scope.launch {
                             delay(1000)
                             nextQuestion()
                         }
                     } else {
-                        feedback = "❌Bé thử lại nhé!"
+                        feedback = "❌ Bé thử lại nhé!"
                     }
                 },
-
                 modifier = Modifier
                     .fillMaxWidth(0.7f)
-                    .padding(vertical = 10.dp)
-                    .clip(RoundedCornerShape(50.dp)),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF81D4FA), // xanh baby
-                    contentColor = Color.White
-                ),
-                shape = RoundedCornerShape(50.dp),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
+                    .padding(vertical = 10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF81D4FA))
             ) {
-                Text(
-                    text = option.toString(),
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 5.dp)
-                )
+                Text(option.toString(), fontSize = 26.sp, fontWeight = FontWeight.Bold)
             }
         }
 
         Spacer(modifier = Modifier.height(25.dp))
 
- //  Phản hồi
         if (feedback.isNotEmpty()) {
             Text(
                 text = feedback,
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (feedback.contains("Chính xác")) Color(0xFF43A047) else Color(0xFFE53935),
-                modifier = Modifier
-                    .clip(RoundedCornerShape(30.dp))
-                    .background(
-                        if (feedback.contains("Chính xác")) Color(0xFFC8E6C9)
-                        else Color(0xFFFFCDD2)
-                    )
-                    .padding(horizontal = 20.dp, vertical = 10.dp)
+                fontSize = 24.sp,
+                color = if (feedback.contains("giỏi")) Color(0xFF43A047) else Color(0xFFE53935)
             )
+        }
+
+        Spacer(modifier = Modifier.height(40.dp))
+
+        Button(onClick = onBack, colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)) {
+            Text("⬅ Quay lại menu", color = Color.White)
         }
     }
 }
 
 fun generateOptions(correctAnswer: Int): List<Int> {
     val options = mutableSetOf(correctAnswer)
-    while (options.size < 3) {
-        val randomOption = Random.nextInt(1, 18)
-        options.add(randomOption)
-    }
+    while (options.size < 3) options.add(Random.nextInt(1, 18))
     return options.shuffled()
-}
-//Xem giao diện
-@Preview(showBackground = true)
-@Composable
-fun MathGamePreview() {
-    MathForKidsTheme {
-        MathGameScreen()
-    }
 }
 
