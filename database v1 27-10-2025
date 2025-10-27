@@ -1,0 +1,258 @@
+-- ==============================================
+-- SCHEMA: math_learning (MariaDB)
+-- Charset & Engine optimized for MariaDB/MySQL
+-- ==============================================
+
+DROP DATABASE IF EXISTS `ktpmud`;
+CREATE DATABASE `ktpmud`
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+USE `ktpmud`;
+
+-- ==============================================
+-- 1. USERS: Quản lý tài khoản người dùng
+-- ==============================================
+CREATE TABLE `users` (
+  `user_id` INT AUTO_INCREMENT PRIMARY KEY,
+  `username` VARCHAR(50) NOT NULL UNIQUE,
+  `password_hash` VARCHAR(255) NOT NULL,
+  `full_name` VARCHAR(100),
+  `role` ENUM('admin','teacher','student','parent') NOT NULL DEFAULT 'student',
+  `email` VARCHAR(100),
+  `phone` VARCHAR(20),
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==============================================
+-- 2. TEACHERS: Thông tin giáo viên
+-- ==============================================
+CREATE TABLE `teachers` (
+  `teacher_id` INT AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT UNIQUE,
+  `full_name` VARCHAR(100) NOT NULL,
+  `email` VARCHAR(100) UNIQUE NOT NULL,
+  `phone` VARCHAR(20),
+  `subject` VARCHAR(50) DEFAULT 'Toán',
+  `hire_date` DATE DEFAULT (CURRENT_DATE),
+  `status` ENUM('active', 'inactive') DEFAULT 'active',
+  CONSTRAINT `fk_teachers_user`
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`user_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==============================================
+-- 3. STUDENTS: Thông tin học sinh
+-- ==============================================
+CREATE TABLE `students` (
+  `student_id` INT AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT NOT NULL UNIQUE,
+  `date_of_birth` DATE,
+  `class_name` VARCHAR(50),
+  `parent_id` INT,
+  `teacher_id` INT,
+  CONSTRAINT `fk_students_user`
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`user_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_students_parent`
+    FOREIGN KEY (`parent_id`) REFERENCES `users`(`user_id`)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_students_teacher`
+    FOREIGN KEY (`teacher_id`) REFERENCES `teachers`(`teacher_id`)
+    ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==============================================
+-- 4. LESSONS: Bài học Toán
+-- ==============================================
+CREATE TABLE `lessons` (
+  `lesson_id` INT AUTO_INCREMENT PRIMARY KEY,
+  `title` VARCHAR(100) NOT NULL,
+  `topic` VARCHAR(50),
+  `description` TEXT,
+  `content` TEXT,
+  `teacher_id` INT,
+  `created_by` INT,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT `fk_lessons_teacher`
+    FOREIGN KEY (`teacher_id`) REFERENCES `teachers`(`teacher_id`)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_lessons_creator`
+    FOREIGN KEY (`created_by`) REFERENCES `users`(`user_id`)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+  INDEX `idx_lessons_topic` (`topic`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==============================================
+-- 5. EXERCISES: Bài tập Toán
+-- ==============================================
+CREATE TABLE `exercises` (
+  `exercise_id` INT AUTO_INCREMENT PRIMARY KEY,
+  `lesson_id` INT NOT NULL,
+  `question_text` TEXT NOT NULL,
+  `image_url` VARCHAR(255),
+  `options` JSON,
+  `correct_answer` VARCHAR(255),
+  `level` ENUM('easy','medium','hard') NOT NULL DEFAULT 'easy',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT `fk_exercises_lesson`
+    FOREIGN KEY (`lesson_id`) REFERENCES `lessons`(`lesson_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  INDEX `idx_exercises_level` (`level`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==============================================
+-- 6. TESTS: Bài kiểm tra
+-- ==============================================
+CREATE TABLE `tests` (
+  `test_id` INT AUTO_INCREMENT PRIMARY KEY,
+  `title` VARCHAR(100) NOT NULL,
+  `lesson_id` INT,
+  `duration` INT, -- phút
+  `created_by` INT,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT `fk_tests_lesson`
+    FOREIGN KEY (`lesson_id`) REFERENCES `lessons`(`lesson_id`)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_tests_teacher`
+    FOREIGN KEY (`created_by`) REFERENCES `users`(`user_id`)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+  INDEX `idx_tests_lesson` (`lesson_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==============================================
+-- 7. TEST_EXERCISES: Liên kết nhiều-nhiều
+-- ==============================================
+CREATE TABLE `test_exercises` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `test_id` INT NOT NULL,
+  `exercise_id` INT NOT NULL,
+  `seq` INT NOT NULL DEFAULT 1,
+  CONSTRAINT `fk_te_test`
+    FOREIGN KEY (`test_id`) REFERENCES `tests`(`test_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_te_exercise`
+    FOREIGN KEY (`exercise_id`) REFERENCES `exercises`(`exercise_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  UNIQUE KEY `ux_test_exercise` (`test_id`, `exercise_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==============================================
+-- 8. TEST_RESULTS: Kết quả làm bài của học sinh
+-- ==============================================
+CREATE TABLE `test_results` (
+  `result_id` INT AUTO_INCREMENT PRIMARY KEY,
+  `test_id` INT NOT NULL,
+  `student_id` INT NOT NULL,
+  `score` FLOAT,
+  `total_questions` INT,
+  `correct_count` INT,
+  `time_spent` INT, -- phút
+  `submitted_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `teacher_feedback` TEXT,
+  CONSTRAINT `fk_results_test`
+    FOREIGN KEY (`test_id`) REFERENCES `tests`(`test_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_results_student`
+    FOREIGN KEY (`student_id`) REFERENCES `students`(`student_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  INDEX `idx_results_student` (`student_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==============================================
+-- 9. PROGRESS_TRACKING: Theo dõi tiến độ
+-- ==============================================
+CREATE TABLE `progress_tracking` (
+  `track_id` INT AUTO_INCREMENT PRIMARY KEY,
+  `student_id` INT NOT NULL,
+  `lesson_id` INT NOT NULL,
+  `status` ENUM('not_started','in_progress','completed') NOT NULL DEFAULT 'not_started',
+  `last_accessed` DATETIME,
+  `streak_days` INT NOT NULL DEFAULT 0,
+  `total_time_spent` INT NOT NULL DEFAULT 0, -- phút
+  CONSTRAINT `fk_progress_student`
+    FOREIGN KEY (`student_id`) REFERENCES `students`(`student_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_progress_lesson`
+    FOREIGN KEY (`lesson_id`) REFERENCES `lessons`(`lesson_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  UNIQUE KEY `ux_progress_student_lesson` (`student_id`,`lesson_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==============================================
+-- 10. PARENT_NOTIFICATIONS: Thông báo cho phụ huynh
+-- ==============================================
+CREATE TABLE `parent_notifications` (
+  `notification_id` INT AUTO_INCREMENT PRIMARY KEY,
+  `student_id` INT NOT NULL,
+  `parent_id` INT NOT NULL,
+  `message` TEXT NOT NULL,
+  `type` ENUM('progress','test_result','reminder') NOT NULL DEFAULT 'progress',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `is_read` TINYINT(1) NOT NULL DEFAULT 0,
+  CONSTRAINT `fk_notify_student`
+    FOREIGN KEY (`student_id`) REFERENCES `students`(`student_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_notify_parent`
+    FOREIGN KEY (`parent_id`) REFERENCES `users`(`user_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  INDEX `idx_notify_parent` (`parent_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==============================================
+-- 11. REWARDS: Phần thưởng cho học sinh
+-- ==============================================
+CREATE TABLE `rewards` (
+  `reward_id` INT AUTO_INCREMENT PRIMARY KEY,
+  `student_id` INT NOT NULL,
+  `reward_title` VARCHAR(100) NOT NULL,
+  `reason` VARCHAR(255),
+  `date_awarded` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT `fk_rewards_student`
+    FOREIGN KEY (`student_id`) REFERENCES `students`(`student_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==============================================
+-- 12. LOGS: Nhật ký hoạt động
+-- ==============================================
+CREATE TABLE `logs` (
+  `log_id` INT AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT,
+  `action` VARCHAR(255) NOT NULL,
+  `timestamp` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `details` TEXT,
+  CONSTRAINT `fk_logs_user`
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`user_id`)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+  INDEX `idx_logs_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==============================================
+-- 13. DỮ LIỆU MẪU (Chỉ dùng để test, không deploy thật)
+-- ==============================================
+INSERT INTO `users` (`username`, `password_hash`, `full_name`, `role`, `email`) VALUES
+('admin', '$2y$10$admin_dummy_hash', 'Admin', 'admin', 'admin@example.com'),
+('teacher01', '$2y$10$teacher_dummy_hash', 'Cô A', 'teacher', 'teacher@example.com'),
+('parent01', '$2y$10$parent_dummy_hash', 'Phụ huynh B', 'parent', 'parent@example.com'),
+('student01', '$2y$10$student_dummy_hash', 'Học sinh C', 'student', 'student@example.com');
+
+INSERT INTO `teachers` (`user_id`, `full_name`, `email`, `phone`)
+VALUES (
+  (SELECT user_id FROM users WHERE username='teacher01'),
+  'Cô A', 'teacher@example.com', '0909123456'
+);
+
+INSERT INTO `students` (`user_id`, `date_of_birth`, `class_name`, `parent_id`, `teacher_id`)
+VALUES (
+  (SELECT user_id FROM users WHERE username='student01'),
+  '2019-05-01',
+  'Toan_5tuoi_A',
+  (SELECT user_id FROM users WHERE username='parent01'),
+  (SELECT teacher_id FROM teachers WHERE email='teacher@example.com')
+);
+
+-- ==============================================
+-- END OF SCHEMA
+-- ==============================================
