@@ -15,22 +15,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mathforkids.ui.theme.MathForKidsTheme
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlin.random.Random
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
-
-
-
-// ----------------------------- Data Model -----------------------------
-
-data class GameResult(
-    val isCorrect: Boolean
-)
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import com.example.mathforkids.model.GameResult
+import com.example.mathforkids.navigation.Screen
+import com.example.mathforkids.ui.levelselection.LevelSelectionScreen
+import com.example.mathforkids.ui.game.GameScreen
 
 // ----------------------------- Main Activity -----------------------------
 
@@ -50,87 +47,180 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AppNavigator() {
-    var currentScreen by remember { mutableStateOf("login") }
-    var registeredUsers = remember { mutableStateListOf<Pair<String, String>>() }
+
+    val navController = rememberNavController()
+
+    // Demo users
+    var registeredUsers = remember {
+        mutableStateListOf(
+            "demo" to "123",
+            "test" to "123",
+            "admin" to "admin"
+        )
+    }
+
     var currentUser by remember { mutableStateOf("") }
+
+    // Game results
     var results = remember { mutableStateListOf<GameResult>() }
 
-    AnimatedContent(
-        targetState = currentScreen,
-        transitionSpec = {
-            fadeIn(animationSpec = tween(600)) with fadeOut(animationSpec = tween(600))
-        }
-    ) { screen ->
-        when (screen) {
-            "login" -> LoginScreen(
-                onLogin = { username, password ->
-                    val userExists = registeredUsers.any { it.first == username && it.second == password }
-                    if (userExists) {
-                        currentUser = username
-                        currentScreen = "menu"
-                    }
-                },
-                onNavigateToRegister = { currentScreen = "register" }
-            )
+    // Track completed levels (empty = chưa hoàn thành level nào)
+    val completedLevels = remember { mutableSetOf<Int>() }
 
-            "register" -> RegisterScreen(
+    NavHost(
+        navController = navController,
+        startDestination = Screen.Login.route
+    ) {
+
+        // ---------------- Login ----------------
+        composable(Screen.Login.route) {
+            LoginScreen(
+                onLogin = { username, password ->
+                    val ok = registeredUsers.any { it.first == username && it.second == password }
+                    if (ok) {
+                        currentUser = username
+                        navController.navigate(Screen.Menu.route) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
+                        }
+                        true
+                    } else false
+                },
+                onNavigateToRegister = {
+                    navController.navigate(Screen.Register.route)
+                }
+            )
+        }
+
+        // ---------------- Register ----------------
+        composable(Screen.Register.route) {
+            RegisterScreen(
                 onRegister = { username, password ->
                     if (registeredUsers.any { it.first == username }) return@RegisterScreen
                     registeredUsers.add(username to password)
-                    currentScreen = "login"
+                    navController.popBackStack()
                 },
-                onBack = { currentScreen = "login" }
+                onBack = { navController.popBackStack() }
             )
+        }
 
-            "menu" -> MainMenuScreen(
+        // ---------------- Menu ----------------
+        composable(Screen.Menu.route) {
+            MainMenuScreen(
                 username = currentUser,
-                onNavigateToMath = { currentScreen = "math" },
-                onNavigateToDashboard = { currentScreen = "dashboard" },
-                onLogout = { currentScreen = "login" }
+                onNavigateToMath = {
+                    navController.navigate(Screen.LevelSelection.route)
+                },
+                onNavigateToDashboard = {
+                    navController.navigate(Screen.Dashboard.route)
+                },
+                onLogout = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Menu.route) { inclusive = true }
+                    }
+                }
             )
+        }
 
-            "math" -> MathGameScreen(
-                onBack = { currentScreen = "menu" },
-                onResult = { result -> results.add(result) }
+        // ---------------- Level Selection ----------------
+        composable(Screen.LevelSelection.route) {
+            LevelSelectionScreen(
+                completedLevels = completedLevels.toSet(),
+                onLevelClick = { gameType, level ->
+                    navController.navigate(
+                        Screen.Game.createRoute(gameType.name, level)
+                    )
+                },
+                onBack = { navController.popBackStack() }
             )
+        }
 
-            "dashboard" -> DashboardScreen(
+        // ---------------- Game Screen ----------------
+        composable(
+            route = Screen.Game.route,
+            arguments = listOf(
+                navArgument("gameType") { type = NavType.StringType },
+                navArgument("level") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val gameType = backStackEntry.arguments?.getString("gameType") ?: "COUNTING"
+            val level = backStackEntry.arguments?.getInt("level") ?: 1
+
+            GameScreen(
+                gameType = gameType,
+                level = level,
+                onComplete = {
+                    // Mark current level as completed
+                    completedLevels.add(level)
+                    navController.popBackStack()
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        // ---------------- Dashboard ----------------
+        composable(Screen.Dashboard.route) {
+            DashboardScreen(
                 results = results,
-                onBack = { currentScreen = "menu" }
+                onBack = { navController.popBackStack() }
             )
         }
     }
 }
 
-
 // ----------------------------- Login Screen -----------------------------
 
 @Composable
-fun LoginScreen(onLogin: (String, String) -> Unit, onNavigateToRegister: () -> Unit) {
+fun LoginScreen(
+    onLogin: (String, String) -> Boolean,
+    onNavigateToRegister: () -> Unit
+) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var error by remember { mutableStateOf("") }
 
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+
         Image(
-            painter = painterResource(id = R.drawable.bg_login), // <-- tên resource đổi thành lowercase
+            painter = painterResource(id = R.drawable.bg_login),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
-        Column(modifier = Modifier.offset(y = (-40).dp),horizontalAlignment = Alignment.CenterHorizontally) {
+
+        Column(modifier = Modifier.offset(y = (-40).dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text("Đăng nhập", fontSize = 32.sp, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(30.dp))
-            OutlinedTextField(value = username, onValueChange = { username = it }, label = { Text("Tên người dùng") })
-            OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Mật khẩu") })
+            Spacer(Modifier.height(20.dp))
+
+            Card(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD))
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text("🎮 Tài khoản demo:", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text("• demo / 123", fontSize = 12.sp)
+                    Text("• test / 123", fontSize = 12.sp)
+                    Text("• admin / admin", fontSize = 12.sp)
+                }
+            }
+
+            Spacer(Modifier.height(20.dp))
+            OutlinedTextField(value = username, onValueChange = { username = it; error = "" }, label = { Text("Tên người dùng") })
+            OutlinedTextField(value = password, onValueChange = { password = it; error = "" }, label = { Text("Mật khẩu") })
+
             Spacer(Modifier.height(20.dp))
             Button(onClick = {
-                if (username.isNotEmpty() && password.isNotEmpty()) {
-                    onLogin(username, password)
-                } else error = "Vui lòng nhập đủ thông tin!"
+                if (username.isEmpty() || password.isEmpty()) {
+                    error = "Vui lòng nhập đủ thông tin!"
+                } else {
+                    if (!onLogin(username, password)) {
+                        error = "Sai tên đăng nhập hoặc mật khẩu!"
+                    }
+                }
             }) { Text("Đăng nhập") }
+
             Spacer(Modifier.height(10.dp))
             TextButton(onClick = onNavigateToRegister) { Text("Chưa có tài khoản? Đăng ký ngay") }
+
             if (error.isNotEmpty()) Text(error, color = Color.Red)
         }
     }
@@ -138,8 +228,6 @@ fun LoginScreen(onLogin: (String, String) -> Unit, onNavigateToRegister: () -> U
 
 // ----------------------------- Register Screen -----------------------------
 
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(onRegister: (String, String) -> Unit, onBack: () -> Unit) {
     var username by remember { mutableStateOf("") }
@@ -147,57 +235,61 @@ fun RegisterScreen(onRegister: (String, String) -> Unit, onBack: () -> Unit) {
 
     Box(
         Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center)
-    {
+        contentAlignment = Alignment.Center
+    ) {
+
         Image(
-            painter = painterResource(id = R.drawable.bg_dangky), // <-- tên resource đổi thành lowercase
+            painter = painterResource(id = R.drawable.bg_dangky),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
+
         Column(
             modifier = Modifier.offset(y = (-40).dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                "Đăng ký",
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
+            Text("Đăng ký", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = Color.White)
             Spacer(Modifier.height(30.dp))
+
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
-                label = { Text("Tên người dùng", color = Color.White) },
-                textStyle = LocalTextStyle.current.copy(color = Color.White),
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    focusedBorderColor = Color.White,
-                    unfocusedBorderColor = Color.White,
-                    cursorColor = Color.White,
-                    focusedLabelColor = Color.White,
-                    unfocusedLabelColor = Color.White
+                label = { Text("Tên đăng nhập") },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF3F51B5),
+                    unfocusedBorderColor = Color.Gray,
+                    focusedLabelColor = Color(0xFF3F51B5),
+                    unfocusedLabelColor = Color.Gray,
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.DarkGray
                 )
             )
 
             OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("Mật khẩu", color = Color.White) },
-                textStyle = LocalTextStyle.current.copy(color = Color.White),
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    focusedBorderColor = Color.White,
-                    unfocusedBorderColor = Color.White,
-                    cursorColor = Color.White,
-                    focusedLabelColor = Color.White,
-                    unfocusedLabelColor = Color.White
+                value = username,
+                onValueChange = { username = it },
+                label = { Text("Tên đăng nhập") },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF3F51B5),
+                    unfocusedBorderColor = Color.Gray,
+                    focusedLabelColor = Color(0xFF3F51B5),
+                    unfocusedLabelColor = Color.Gray,
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.DarkGray
                 )
             )
+
 
             Spacer(Modifier.height(20.dp))
             Button(onClick = {
                 if (username.isNotEmpty() && password.isNotEmpty()) onRegister(username, password)
-            }) { Text("Tạo tài khoản") }
+            }) {
+                Text("Tạo tài khoản")
+            }
+
             Spacer(Modifier.height(10.dp))
             TextButton(onClick = onBack) { Text("⬅ Quay lại đăng nhập") }
         }
@@ -213,94 +305,55 @@ fun MainMenuScreen(
     onNavigateToDashboard: () -> Unit,
     onLogout: () -> Unit
 ) {
+
     Box(
         Modifier
             .fillMaxSize()
             .background(Brush.verticalGradient(listOf(Color(0xFFE1BEE7), Color(0xFFFFF8E1)))),
         contentAlignment = Alignment.Center
     ) {
+
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
             Text("Xin chào, $username 👋", fontSize = 28.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(40.dp))
-            Button(onClick = onNavigateToMath) { Text("🎯 Bé học Toán") }
-            Spacer(Modifier.height(20.dp))
-            Button(onClick = onNavigateToDashboard) { Text("📊 Thống kê học tập") }
-            Spacer(Modifier.height(20.dp))
-            Button(onClick = onLogout, colors = ButtonDefaults.buttonColors(containerColor = Color.Red)) {
-                Text("Đăng xuất", color = Color.White)
-            }
-        }
-    }
-}
 
-// ----------------------------- Math Game -----------------------------
-
-@Composable
-fun MathGameScreen(onBack: () -> Unit, onResult: (GameResult) -> Unit) {
-    var num1 by remember { mutableStateOf(Random.nextInt(1, 10)) }
-    var num2 by remember { mutableStateOf(Random.nextInt(1, 10)) }
-    var answer by remember { mutableStateOf(num1 + num2) }
-    var options by remember { mutableStateOf(generateOptions(answer)) }
-    var feedback by remember { mutableStateOf("") }
-    val scope = rememberCoroutineScope()
-
-    fun nextQuestion() {
-        num1 = Random.nextInt(1, 10)
-        num2 = Random.nextInt(1, 10)
-        answer = num1 + num2
-        options = generateOptions(answer)
-        feedback = ""
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(Color(0xFFFFF3E0), Color(0xFFFFE0B2), Color(0xFFFFCCBC))
-                )
-            )
-            .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text("🎯 Math For Kids 🎯", fontSize = 32.sp, fontWeight = FontWeight.ExtraBold)
-        Spacer(Modifier.height(40.dp))
-        Text("$num1 + $num2 = ?", fontSize = 40.sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(40.dp))
-        options.forEach { option ->
             Button(
-                onClick = {
-                    val correct = option == answer
-                    onResult(GameResult(correct))
-                    feedback = if (correct) "🎉 Bé giỏi quá!" else "❌ Bé thử lại nhé!"
-                    if (correct) {
-                        scope.launch {
-                            delay(1000)
-                            nextQuestion()
-                        }
-                    }
-                },
+                onClick = onNavigateToMath,
                 modifier = Modifier
                     .fillMaxWidth(0.7f)
-                    .padding(vertical = 10.dp)
-            ) {
-                Text(option.toString(), fontSize = 26.sp, fontWeight = FontWeight.Bold)
-            }
-        }
-        Spacer(Modifier.height(25.dp))
-        if (feedback.isNotEmpty()) Text(feedback, fontSize = 24.sp)
-        Spacer(Modifier.height(40.dp))
-        Button(onClick = onBack, colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)) {
-            Text("⬅ Quay lại menu", color = Color.White)
+                    .height(70.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+            ) { Text("🎯 Bé học Toán", fontSize = 24.sp, fontWeight = FontWeight.Bold) }
+
+            Spacer(Modifier.height(20.dp))
+
+            Button(
+                onClick = onNavigateToDashboard,
+                modifier = Modifier
+                    .fillMaxWidth(0.7f)
+                    .height(70.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3))
+            ) { Text("📊 Thống kê", fontSize = 24.sp, fontWeight = FontWeight.Bold) }
+
+            Spacer(Modifier.height(20.dp))
+
+            Button(
+                onClick = onLogout,
+                modifier = Modifier
+                    .fillMaxWidth(0.7f)
+                    .height(60.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+            ) { Text("Đăng xuất", fontSize = 20.sp, color = Color.White) }
         }
     }
 }
 
-// ----------------------------- Dashboard Screen -----------------------------
+// ----------------------------- Dashboard -----------------------------
 
 @Composable
 fun DashboardScreen(results: List<GameResult>, onBack: () -> Unit) {
+
     val totalQuestions = results.size
     val correctAnswers = results.count { it.isCorrect }
     val incorrectAnswers = totalQuestions - correctAnswers
@@ -310,17 +363,21 @@ fun DashboardScreen(results: List<GameResult>, onBack: () -> Unit) {
         Modifier
             .fillMaxSize()
             .background(Color(0xFFF1F8E9))
-            .padding(20.dp)
-            .offset(y = (-100).dp),
+            .padding(20.dp),
         contentAlignment = Alignment.TopCenter
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(top = 40.dp)
+        ) {
             Text("📊 Kết quả học tập", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = Color(0xFF388E3C))
             Spacer(Modifier.height(20.dp))
 
             if (totalQuestions == 0) {
-                Text("Chưa có dữ liệu. Hãy chơi vài ván nhé!", color = Color.Gray)
+                Text("Chưa có dữ liệu. Hãy chơi vài ván nhé!", fontSize = 20.sp, color = Color.Gray)
             } else {
+
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
@@ -332,7 +389,6 @@ fun DashboardScreen(results: List<GameResult>, onBack: () -> Unit) {
 
                 Spacer(Modifier.height(40.dp))
 
-                // Biểu đồ đơn giản
                 Canvas(modifier = Modifier.fillMaxWidth().height(200.dp)) {
                     val total = correctAnswers + incorrectAnswers
                     if (total > 0) {
@@ -356,7 +412,15 @@ fun DashboardScreen(results: List<GameResult>, onBack: () -> Unit) {
             }
 
             Spacer(Modifier.height(30.dp))
-            Button(onClick = onBack) { Text("⬅ Quay lại menu") }
+
+            Button(
+                onClick = onBack,
+                modifier = Modifier
+                    .fillMaxWidth(0.6f)
+                    .height(60.dp)
+            ) {
+                Text("⬅ Quay lại menu", fontSize = 20.sp)
+            }
         }
     }
 }
@@ -367,12 +431,4 @@ fun StatCard(label: String, value: Any, color: Color) {
         Text(label, color = Color.DarkGray)
         Text(value.toString(), fontSize = 30.sp, fontWeight = FontWeight.Bold, color = color)
     }
-}
-
-// ----------------------------- Helper -----------------------------
-
-fun generateOptions(correctAnswer: Int): List<Int> {
-    val options = mutableSetOf(correctAnswer)
-    while (options.size < 3) options.add(Random.nextInt(1, 18))
-    return options.shuffled()
 }
