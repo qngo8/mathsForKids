@@ -1,216 +1,147 @@
-# 🎮 Hướng Dẫn Sử Dụng GameConfig
+# ⚙️ Hướng Dẫn GameConfig
 
-## 📍 File Config: `GameConfig.kt`
+## 📍 File: `config/GameConfig.kt`
 
-File này chứa **TẤT CẢ** các thông số trò chơi để bạn dễ dàng điều chỉnh mà không cần sửa nhiều file khác nhau.
+Chứa **TẤT CẢ** thông số game, dễ dàng điều chỉnh.
 
----
+## 🎯 Thông Số Chính
 
-## ⚙️ CÁC THÔNG SỐ QUAN TRỌNG
-
-### 🎯 Điều Kiện Qua Level
-
+### Điều Kiện Qua Level
 ```kotlin
-// Số câu đúng cần để unlock level tiếp theo
-CORRECT_ANSWERS_TO_UNLOCK_NEXT_LEVEL = 3  // Mặc định: 3 câu đúng
+CORRECT_ANSWERS_TO_UNLOCK_NEXT_LEVEL = 3  // 3 câu đúng → qua level
+```
+**Thay đổi**:
+- Dễ hơn: `= 2`
+- Khó hơn: `= 5`
+- Test nhanh: `= 1`
 
-// Hiện tại: Trả lời đúng 3 câu → Dialog hoàn thành → Qua level tiếp
+### Hệ Thống Sao
+```kotlin
+CORRECT_FOR_ONE_STAR = 2      // 2 đúng → 1⭐
+CORRECT_FOR_TWO_STARS = 4     // 4 đúng → 2⭐
+CORRECT_FOR_THREE_STARS = 6   // 6 đúng → 3⭐
 ```
 
-**Muốn thay đổi?**
-- Dễ hơn: `= 2` (chỉ cần 2 câu đúng)
-- Khó hơn: `= 5` (cần 5 câu đúng)
-- Test nhanh: `= 1` (1 câu đúng là qua level)
+### Độ Khó Theo Level
 
----
-
-### ⭐ Hệ Thống Sao
-
+#### Đếm Số
 ```kotlin
-CORRECT_FOR_ONE_STAR = 2      // 2 câu đúng → 1 sao ⭐
-CORRECT_FOR_TWO_STARS = 4     // 4 câu đúng → 2 sao ⭐⭐
-CORRECT_FOR_THREE_STARS = 6   // 6 câu đúng → 3 sao ⭐⭐⭐
+LEVEL_1_MAX = 5   // Đếm 1-5
+LEVEL_2_MAX = 7   // Đếm 1-7
+LEVEL_3_MAX = 10  // Đếm 1-10
 ```
 
-**Ví dụ:**
-- Trả lời đúng 3 câu: Qua level với 1 sao ⭐
-- Trả lời đúng 5 câu: Qua level với 2 sao ⭐⭐
-- Trả lời đúng 7 câu: Qua level với 3 sao ⭐⭐⭐
-
----
-
-### 📊 Độ Khó Theo Level
-
-#### Counting Game (Đếm số)
+#### Phép Cộng
 ```kotlin
-LEVEL_1_MAX = 5   // Level 1: Đếm từ 1-5
-LEVEL_2_MAX = 7   // Level 2: Đếm từ 1-7
-LEVEL_3_MAX = 10  // Level 3: Đếm từ 1-10
+LEVEL_1_MAX = 5   // Số 1-5 (2+3)
+LEVEL_2_MAX = 10  // Số 1-10 (7+8)
+LEVEL_3_MAX = 15  // Số 1-15 (12+13)
 ```
 
-#### Addition Game (Phép cộng)
+#### Phép Trừ
 ```kotlin
-LEVEL_1_MAX = 5   // Level 1: Số từ 1-5 (VD: 2+3)
-LEVEL_2_MAX = 10  // Level 2: Số từ 1-10 (VD: 7+8)
-LEVEL_3_MAX = 15  // Level 3: Số từ 1-15 (VD: 12+13)
+LEVEL_1_MAX = 5   // 5-2, 4-1
+LEVEL_2_MAX = 10  // 10-3, 8-5
+LEVEL_3_MAX = 15  // 15-7, 12-8
 ```
 
-#### Subtraction Game (Phép trừ)
+#### Ghép Số
 ```kotlin
-LEVEL_1_MAX = 5   // Level 1: 5-2, 4-1, etc
-LEVEL_2_MAX = 10  // Level 2: 10-3, 8-5, etc
-LEVEL_3_MAX = 15  // Level 3: 15-7, 12-8, etc
+LEVEL_1_MAX = 5   // Ghép 1-5
+LEVEL_2_MAX = 8   // Ghép 1-8
+LEVEL_3_MAX = 10  // Ghép 1-10
 ```
 
-#### Matching Game (Ghép số)
+### Thời Gian (milliseconds)
 ```kotlin
-LEVEL_1_MAX = 5   // Level 1: Ghép số 1-5
-LEVEL_2_MAX = 8   // Level 2: Ghép số 1-8
-LEVEL_3_MAX = 10  // Level 3: Ghép số 1-10
+DELAY_BEFORE_NEXT_QUESTION = 1500L  // 1.5s sau khi đúng
+DELAY_BEFORE_RETRY = 1500L          // 1.5s sau khi sai
+CELEBRATION_DURATION = 2000L        // 2s celebration
 ```
 
----
-
-### ⏱️ Thời Gian Animation
-
+### Thông Số UI
 ```kotlin
-DELAY_BEFORE_NEXT_QUESTION = 1500L  // 1.5 giây sau khi đúng
-DELAY_BEFORE_RETRY = 1500L          // 1.5 giây sau khi sai
-CELEBRATION_DURATION = 2000L        // 2 giây hiển thị celebration
+NUMBER_OF_OPTIONS = 3              // 3 lựa chọn
+NUMBER_OF_MATCHING_OPTIONS = 4     // 4 lựa chọn matching
+MAX_OBJECTS_PER_ROW = 5           // Tối đa 5 vật/hàng
 ```
 
-**Đơn vị: milliseconds (1000 = 1 giây)**
+## 🔧 Ví Dụ Thay Đổi
 
-Muốn nhanh hơn? Giảm số:
-- `= 1000L` → 1 giây
-- `= 500L` → 0.5 giây
-
----
-
-### 🎨 Thông Số UI
-
+### Dễ hơn cho trẻ nhỏ
 ```kotlin
-NUMBER_OF_OPTIONS = 3              // 3 lựa chọn đáp án (counting, addition, subtraction)
-NUMBER_OF_MATCHING_OPTIONS = 4     // 4 lựa chọn cho matching game
-MAX_OBJECTS_PER_ROW = 5           // Tối đa 5 object mỗi hàng
-```
-
----
-
-## 🔧 CÁCH THAY ĐỔI
-
-### Ví dụ 1: Muốn dễ hơn cho trẻ nhỏ
-
-```kotlin
-// Trong GameConfig.kt
-const val CORRECT_ANSWERS_TO_UNLOCK_NEXT_LEVEL = 2  // Chỉ cần 2 câu đúng
+const val CORRECT_ANSWERS_TO_UNLOCK_NEXT_LEVEL = 2
 
 object CountingDifficulty {
-    const val LEVEL_1_MAX = 3   // Đếm tối đa 3
-    const val LEVEL_2_MAX = 5   // Đếm tối đa 5
-    const val LEVEL_3_MAX = 7   // Đếm tối đa 7
+    const val LEVEL_1_MAX = 3
+    const val LEVEL_2_MAX = 5
+    const val LEVEL_3_MAX = 7
 }
+```
+
+### Khó hơn, thử thách
+```kotlin
+const val CORRECT_ANSWERS_TO_UNLOCK_NEXT_LEVEL = 5
 
 object AdditionDifficulty {
-    const val LEVEL_1_MAX = 3   // Cộng số nhỏ 1-3
-    const val LEVEL_2_MAX = 5   // Cộng số nhỏ 1-5
-    const val LEVEL_3_MAX = 8   // Cộng số nhỏ 1-8
+    const val LEVEL_1_MAX = 10
+    const val LEVEL_2_MAX = 20
+    const val LEVEL_3_MAX = 30
 }
 ```
 
-### Ví dụ 2: Muốn khó hơn, thử thách hơn
-
+### Test nhanh
 ```kotlin
-const val CORRECT_ANSWERS_TO_UNLOCK_NEXT_LEVEL = 5  // Cần 5 câu đúng
-
-object AdditionDifficulty {
-    const val LEVEL_1_MAX = 10  // Level 1 đã khó
-    const val LEVEL_2_MAX = 20  // Level 2 rất khó
-    const val LEVEL_3_MAX = 30  // Level 3 cực khó!
-}
+const val CORRECT_ANSWERS_TO_UNLOCK_NEXT_LEVEL = 1  // 1 câu qua luôn!
 ```
 
-### Ví dụ 3: Test nhanh, qua level liền
+## 💡 Tính Năng
 
-```kotlin
-const val CORRECT_ANSWERS_TO_UNLOCK_NEXT_LEVEL = 1  // 1 câu đúng là qua!
-```
-
----
-
-## 💡 TÍNH NĂNG MỚI
-
-### ✅ Dialog Hoàn Thành Level
-
-Khi đạt đủ số câu đúng, sẽ hiển thị:
+### Dialog Hoàn Thành
+Khi đủ câu đúng:
 - 🎊 Thông báo hoàn thành
-- ⭐⭐⭐ Số sao đạt được
+- ⭐⭐⭐ Số sao
 - 📊 Thống kê (Đúng/Sai)
-- **➡️ Level tiếp theo** - Tự động quay về chọn level
-- **🔄 Chơi lại** - Chơi lại level hiện tại
+- **➡️ Level tiếp** - Về chọn level
+- **🔄 Chơi lại** - Replay
 
-### ✅ Unlock Level Tự Động
+### Unlock Tự Động
+Level tiếp tự động unlock sau khi hoàn thành.
 
-- Level tiếp theo sẽ tự unlock sau khi hoàn thành (chức năng sẽ được thêm vào LevelSelectionScreen)
-- Không cần code gì thêm, chỉ cần trả lời đúng đủ số câu!
-
----
-
-## 🎯 QUI TRÌNH CHƠI MỚI
+## 🎯 Quy Trình Chơi
 
 ```
-Bắt đầu Level 1
-    ↓
+Level 1
+  ↓
 Trả lời câu hỏi
-    ↓
-Đúng 1 → Tiếp tục
-Đúng 2 → Tiếp tục  
-Đúng 3 → 🎊 HOÀN THÀNH!
-    ↓
-Dialog xuất hiện:
-  - Hiển thị sao: ⭐ (vì chỉ đúng 3)
-  - Chọn "Level tiếp theo" → Về màn hình chọn level
-  - Level 2 đã unlock!
+  ↓
+Đúng 3 câu → 🎊 HOÀN THÀNH!
+  ↓
+Dialog: ⭐ (3 câu đúng)
+  ↓
+"Level tiếp theo" → Level 2 unlock!
 ```
 
----
+## 📝 Ghi Chú
 
-## 📝 GHI CHÚ
+### Config mặc định:
+- ✅ 3 câu đúng qua level
+- ✅ 1-3 sao tùy số câu
+- ✅ 3 lựa chọn
+- ✅ 1.5s delay
+- ✅ Level 1 dễ → Level 3 khó
 
-### Config hiện tại (mặc định):
-- ✅ **3 câu đúng** để qua level
-- ✅ **1-3 sao** tùy theo số câu đúng
-- ✅ **3 lựa chọn** đáp án
-- ✅ **1.5 giây** delay giữa các câu
-- ✅ **Level 1 dễ, Level 3 khó** (tự động tăng)
-
-### Để test nhanh:
+### Helper Functions
 ```kotlin
-// Đổi thành 1 câu đúng là qua
-const val CORRECT_ANSWERS_TO_UNLOCK_NEXT_LEVEL = 1
+// Tính số sao
+fun getStarsForCorrectAnswers(correct: Int): Int
+
+// Check unlock
+fun shouldUnlockNextLevel(correct: Int): Boolean
+
+// Lấy max số cho level
+fun getCountingMaxForLevel(level: Int): Int
+fun getAdditionMaxForLevel(level: Int): Int
+fun getSubtractionMaxForLevel(level: Int): Int
+fun getMatchingMaxForLevel(level: Int): Int
 ```
-
-### Để làm game khó:
-```kotlin
-// Cần 10 câu đúng mới qua level!
-const val CORRECT_ANSWERS_TO_UNLOCK_NEXT_LEVEL = 10
-
-// Và tăng độ khó
-object AdditionDifficulty {
-    const val LEVEL_1_MAX = 20
-    const val LEVEL_2_MAX = 50
-    const val LEVEL_3_MAX = 100
-}
-```
-
----
-
-## 🚀 BẮT ĐẦU NGAY
-
-1. Mở file `config/GameConfig.kt`
-2. Thay đổi số `CORRECT_ANSWERS_TO_UNLOCK_NEXT_LEVEL`
-3. Build lại app
-4. Chơi thử!
-
-**Hiện tại:** Chỉ cần **3 câu đúng** là qua level và mở level tiếp theo! 🎉
-

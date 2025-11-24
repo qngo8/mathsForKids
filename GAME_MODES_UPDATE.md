@@ -1,46 +1,37 @@
-# 🎮 Math For Kids - Game Modes & Navigation Update
+# 🎮 Math For Kids - Các Chế Độ Chơi
 
-## ✨ What's New
+## ✨ Tính Năng Mới
 
-### 🎯 Duolingo-Style Learning Path
-- **Visual Level Selection**: Interactive path with colorful circles representing different game modes
-- **Progressive Unlocking**: Levels unlock as children complete previous ones (like Duolingo!)
-- **Star System**: Earn up to 3 stars per level based on performance
-- **Animated Nodes**: Pulsating animations on unlocked levels to attract kids' attention
+### 🎯 Lộ Trình Học Kiểu Duolingo
+- Chọn level bằng đường đi màu sắc
+- Mở khóa tuần tự khi hoàn thành level trước
+- Hệ thống 1-3 sao dựa trên số câu đúng
+- Hiệu ứng nhấp nháy thu hút trẻ
 
-### 🎲 Four Engaging Game Modes
+### 🎲 Bốn Chế Độ Chơi
 
-#### 1️⃣ Counting Game (🔢)
-- **Visual Learning**: Count colorful emojis (apples, stars, balloons, etc.)
-- **Progressive Difficulty**: 
-  - Level 1: Count 1-5 objects
-  - Level 2: Count 1-7 objects
-  - Level 3+: Count 1-10 objects
-- **Perfect for**: 4-5 year olds learning basic counting
+#### 1️⃣ Đếm Số (🔢)
+- Đếm emoji màu sắc (táo, sao, bóng bay...)
+- Level 1: 1-5 vật, Level 2: 1-7 vật, Level 3+: 1-10 vật
+- Phù hợp trẻ 4-5 tuổi học đếm cơ bản
 
-#### 2️⃣ Addition Game (➕)
-- **Visual Representation**: See groups of objects being added together
-- **Math Expression**: Clear display of "num1 + num2 = ?"
-- **Difficulty Levels**:
-  - Level 1: Numbers 1-5
-  - Level 2: Numbers 1-10
-  - Level 3+: Numbers 1-15
+#### 2️⃣ Phép Cộng (➕)
+- Hiển thị 2 nhóm vật để cộng
+- Level 1: số 1-5, Level 2: số 1-10, Level 3+: số 1-15
 
-#### 3️⃣ Subtraction Game (➖)
-- **Disappearing Animation**: Watch objects disappear to understand "taking away"
-- **Visual Context**: Shows initial amount and what's being removed
-- **Kid-Friendly**: Always produces non-negative results
-- **Progressive**: Starts simple and increases complexity
+#### 3️⃣ Phép Trừ (➖)
+- Animation vật biến mất khi trừ đi
+- Luôn cho kết quả không âm
+- Độ khó tăng dần
 
-#### 4️⃣ Number Matching Game (🎯)
-- **Number Recognition**: Match numbers to visual quantities
-- **Grid Layout**: 4 large number buttons for easy tapping
-- **Visual Reinforcement**: See diamonds/gems to count
-- **Builds Foundation**: Reinforces number-quantity relationship
+#### 4️⃣ Ghép Số (🎯)
+- Ghép số với số lượng vật tương ứng
+- 4 nút lớn dễ bấm
+- Củng cố quan hệ số-lượng
 
-### 🧭 Professional Navigation System
+### 🧭 Hệ Thống Navigation
 
-#### Type-Safe Navigation
+#### Type-Safe Routes
 ```kotlin
 sealed class Screen(val route: String) {
     object Login : Screen("login")
@@ -52,89 +43,55 @@ sealed class Screen(val route: String) {
 }
 ```
 
-#### Navigation Flow
-```
-Login → Register (optional)
-  ↓
-Main Menu
-  ├─→ Level Selection (Duolingo Path)
-  │     ↓
-  │   Game Modes (Counting/Addition/Subtraction/Matching)
-  │     ↓
-  │   Back to Level Selection
-  │
-  └─→ Dashboard (Statistics)
-```
+### 🎨 Giao Diện Thân Thiện
 
-### 🎨 Kid-Friendly UI Features
+#### Nút Lớn, Màu Sắc
+- Nút cao 70dp, dễ bấm cho tay nhỏ
+- Màu sáng, tương phản cao
+- Hiệu ứng khi bấm
 
-#### Big, Colorful Buttons
-- **Large Touch Targets**: 70dp height for easy tapping by small fingers
-- **High Contrast**: Bright colors that appeal to children
-- **Clear Feedback**: Buttons scale and change color when pressed
+#### Phản Hồi Trực Quan
+- ✅ **Đúng**: Nền xanh, "🎉 Bé giỏi quá!", animation sao ⭐⭐⭐
+- ❌ **Sai**: Nền đỏ, "💪 Thử lại nhé!", khích lệ nhẹ nhàng
 
-#### Visual Feedback System
-- ✅ **Correct Answer**: 
-  - Green background
-  - "🎉 Bé giỏi quá!" message
-  - Star animation (⭐⭐⭐)
-  - Scale animation
-  
-- ❌ **Incorrect Answer**:
-  - Red background
-  - "💪 Thử lại nhé!" encouraging message
-  - Gentle feedback (not scary)
+#### Animation
+- Bounce effect trên nút
+- Fade transition giữa màn hình
+- Scale animation trên level đã mở
+- Vật biến mất khi trừ
 
-#### Animations
-- **Bounce Effects**: Spring animations on buttons
-- **Fade Transitions**: Smooth screen changes
-- **Scale Animations**: Pulsating unlocked levels
-- **Disappearing Objects**: Visual subtraction effect
-
-### 📁 New Project Structure
+### 📁 Cấu Trúc Project
 
 ```
 app/src/main/java/com/example/mathforkids/
-├── MainActivity.kt (Updated with NavHost)
-├── model/
-│   └── GameModels.kt (Game types, questions, results)
-├── navigation/
-│   └── Screen.kt (Type-safe routes)
-├── ui/
-│   ├── game/
-│   │   ├── GameScreen.kt (Router)
-│   │   ├── CountingGame.kt
-│   │   ├── AdditionGame.kt
-│   │   ├── SubtractionGame.kt
-│   │   ├── MatchingGame.kt
-│   │   └── GameComponents.kt (Shared UI)
-│   ├── levelselection/
-│   │   └── LevelSelectionScreen.kt
-│   └── theme/
+├── MainActivity.kt
+├── model/GameModels.kt
+├── navigation/Screen.kt
+├── config/GameConfig.kt
+└── ui/
+    ├── game/
+    │   ├── GameScreen.kt
+    │   ├── CountingGame.kt
+    │   ├── AdditionGame.kt
+    │   ├── SubtractionGame.kt
+    │   ├── MatchingGame.kt
+    │   └── GameComponents.kt
+    └── levelselection/
+        └── LevelSelectionScreen.kt
 ```
 
-## 🚀 How It Works
+## 🚀 Cách Hoạt Động
 
-### For Parents/Teachers
+### Thêm Chế Độ Mới
 
-1. **Login System**: Simple username/password (demo only - add proper auth later)
-2. **Level Selection**: Kids see a colorful path of levels
-3. **Auto-Progress**: Next level unlocks after completing current one
-4. **Safe Learning**: Only positive reinforcement, no scary "wrong" messages
-5. **Track Progress**: Dashboard shows stats and accuracy
-
-### For Developers
-
-#### Adding a New Game Mode
-
-1. Add to `GameType` enum in `GameModels.kt`:
+1. Thêm vào `GameType` enum:
 ```kotlin
 enum class GameType(val displayName: String, val emoji: String, val color: Color) {
-    NEW_MODE("Display Name", "🎮", Color(0xFF...))
+    NEW_MODE("Tên hiển thị", "🎮", Color(0xFF...))
 }
 ```
 
-2. Create question type:
+2. Tạo question type:
 ```kotlin
 data class NewModeQuestion(
     val param1: Int,
@@ -142,62 +99,56 @@ data class NewModeQuestion(
 ) : GameQuestion()
 ```
 
-3. Create game screen in `ui/game/NewModeGame.kt`
+3. Tạo file game screen trong `ui/game/`
+4. Thêm case vào `GameScreen.kt`
 
-4. Add case to `GameScreen.kt` router
+### Tùy Chỉnh Độ Khó
 
-#### Customizing Difficulty
-
-Edit the level-based logic in each game:
+Chỉnh trong `config/GameConfig.kt`:
 ```kotlin
-fun generateQuestion(level: Int): GameQuestion {
-    val maxNum = when (level) {
-        1 -> 5    // Easy
-        2 -> 10   // Medium
-        else -> 15 // Hard
-    }
-    // Generate question...
+object CountingDifficulty {
+    const val LEVEL_1_MAX = 5    // Dễ
+    const val LEVEL_2_MAX = 10   // Trung bình
+    const val LEVEL_3_MAX = 15   // Khó
 }
 ```
 
-## 🎯 Age-Appropriate Design
+## 🎯 Thiết Kế Cho Trẻ 4-5 Tuổi
 
-### For 4-5 Year Olds
+✅ **Đúng Cách**:
+- Nút cực lớn, dễ bấm
+- Màu sắc vui tươi
+- Nhiều emoji
+- Hướng dẫn tiếng Việt đơn giản
+- Học bằng hình ảnh
+- Phản hồi tức thì
+- Lời động viên
+- Navigation đơn giản
 
-✅ **What We Did Right**:
-- Extra large buttons (easy to tap)
-- Bright, cheerful colors
-- Lots of emojis (kids love them!)
-- Simple, clear instructions in Vietnamese
-- Visual learning (not just numbers)
-- Immediate feedback
-- Encouraging messages
-- No complex navigation (simple back buttons)
+✅ **An Toàn**:
+- Không có quảng cáo
+- Chỉ động viên tích cực
+- Toán phù hợp lứa tuổi (không chia, phân số)
+- Phụ huynh/giáo viên giám sát qua dashboard
 
-✅ **Safety Features**:
-- No ads or external links
-- Positive reinforcement only
-- Age-appropriate math (no division, fractions)
-- Clear parent/teacher oversight via dashboard
+## 🔧 Cải Tiến Kỹ Thuật
 
-## 🔧 Technical Improvements
+### Navigation Compose
+- Type-safe: không lỗi typo
+- Quản lý back stack tốt
+- Sẵn sàng deep linking
+- Lifecycle aware
+- Dễ test
 
-### Navigation Compose Benefits
-- **Type Safety**: No more string typos causing crashes
-- **Back Stack Management**: Proper Android back button handling
-- **Deep Linking Ready**: Can add URL schemes later
-- **Lifecycle Aware**: Survives configuration changes
-- **Testable**: Can test navigation logic
+### Chất Lượng Code
+- Tách concerns: UI, Navigation, Models
+- Components tái sử dụng
+- Pattern nhất quán
+- Dễ mở rộng
 
-### Code Quality
-- **Separation of Concerns**: UI, Navigation, Models separated
-- **Reusable Components**: `GameComponents.kt` for shared UI
-- **Consistent Patterns**: All games follow same structure
-- **Easy to Extend**: Add new game modes easily
+## 📊 Các Màn Hình Giữ Nguyên
 
-## 📊 What's Still Using Original Code
-
-These screens remain from your original implementation:
+Login, Register, Menu, Dashboard vẫn dùng code gốc.
 - ✅ `LoginScreen` (with background image)
 - ✅ `RegisterScreen` (with background image)
 - ✅ `MainMenuScreen` (updated with bigger buttons)
@@ -246,20 +197,20 @@ Create drawable resources instead of emojis:
 - [x] Subtraction game animates disappearing objects
 - [x] Matching game has 4 number options
 - [x] Feedback animations play correctly
-- [x] Back buttons return to correct screens
-- [x] Level selection path displays properly
-- [x] No compilation errors
-- [ ] Test on physical device (recommended for touch testing)
+- [x] Nút back hoạt động đúng
+- [x] Đường đi level hiển thị tốt
+- [x] Không lỗi compile
+- [ ] Test trên thiết bị thật
 
-## 💡 Usage Tips
+## 💡 Lưu Ý
 
-### For Best Experience:
-1. Test on tablet for better visibility for kids
-2. Landscape mode may need adjustments
-3. Ensure touch targets are accessible for small fingers
-4. Bright screen environment (kids need clear visuals)
+### Trải Nghiệm Tốt Nhất:
+1. Test trên tablet để trẻ nhìn rõ hơn
+2. Chế độ ngang cần điều chỉnh thêm
+3. Nút đủ lớn cho tay nhỏ
+4. Màn hình sáng (trẻ cần hình ảnh rõ)
 
 ---
 
-**Built with ❤️ for young learners!** 🎓👶
+**Xây dựng với ❤️ cho các bé!** 🎓👶
 
