@@ -1,0 +1,220 @@
+-- ==============================================
+-- SCHEMA: ktpmud (MariaDB) - Reviewed & Optimized
+-- Target: Math System for 5-year-old kids
+-- ==============================================
+
+DROP DATABASE IF EXISTS `ktpmud`;
+CREATE DATABASE `ktpmud`
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+USE `ktpmud`;
+
+-- 1. USERS: Tài khoản chung
+CREATE TABLE `users` (
+  `user_id` INT AUTO_INCREMENT PRIMARY KEY,
+  `username` VARCHAR(50) NOT NULL UNIQUE,
+  `password_hash` VARCHAR(255) NOT NULL,
+  `full_name` VARCHAR(100) NOT NULL,
+  `avatar_url` VARCHAR(255) DEFAULT 'default_avatar.png', -- Thêm avatar để hiển thị cho đẹp
+  `role` ENUM('admin','teacher','student','parent') NOT NULL DEFAULT 'student',
+  `email` VARCHAR(100),
+  `phone` VARCHAR(20),
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_email` (`email`),
+  INDEX `idx_phone` (`phone`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 2. TEACHERS
+CREATE TABLE `teachers` (
+  `user_id` INT PRIMARY KEY,
+  `subject` VARCHAR(50) DEFAULT 'Toán',
+  `hire_date` DATE DEFAULT CURRENT_DATE,
+  `bio` TEXT, -- Giới thiệu ngắn về giáo viên
+  `status` ENUM('active','inactive') DEFAULT 'active',
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`user_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- 3. PARENTS
+CREATE TABLE `parents` (
+  `user_id` INT PRIMARY KEY,
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`user_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- 4. STUDENTS
+CREATE TABLE `students` (
+  `user_id` INT PRIMARY KEY,
+  `date_of_birth` DATE,
+  `class_name` VARCHAR(50),
+  `parent_id` INT,
+  `teacher_id` INT,
+  `quick_login_code` VARCHAR(6), -- Mã PIN 4-6 số để bé đăng nhập nhanh
+  `total_stars` INT DEFAULT 0,   -- Tích hợp gamification (sao thưởng)
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`user_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY (`parent_id`) REFERENCES `parents`(`user_id`)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+  FOREIGN KEY (`teacher_id`) REFERENCES `teachers`(`user_id`)
+    ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+-- 5. LESSONS
+CREATE TABLE `lessons` (
+  `lesson_id` INT AUTO_INCREMENT PRIMARY KEY,
+  `title` VARCHAR(100) NOT NULL,
+  `topic` VARCHAR(50), -- Ví dụ: Đếm số, Cộng trừ, Hình học
+  `description` TEXT,
+  `content` TEXT, -- HTML hoặc nội dung text
+  `video_url` VARCHAR(255), -- Video bài giảng (quan trọng cho trẻ em)
+  `thumbnail_url` VARCHAR(255), -- Hình đại diện bài học
+  `teacher_id` INT,
+  `created_by` INT,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (`teacher_id`) REFERENCES `teachers`(`user_id`)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+  FOREIGN KEY (`created_by`) REFERENCES `users`(`user_id`)
+    ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+-- 6. EXERCISES: Bài tập (Core feature)
+CREATE TABLE `exercises` (
+  `exercise_id` INT AUTO_INCREMENT PRIMARY KEY,
+  `lesson_id` INT NOT NULL,
+  `question_text` TEXT NOT NULL,
+  `audio_url` VARCHAR(255), -- QUAN TRỌNG: Giọng đọc câu hỏi cho bé chưa biết chữ
+  `image_url` VARCHAR(255), -- Hình ảnh minh họa câu hỏi
+  `options` JSON, -- Cấu trúc: [{"id":1, "text":"3 quả", "img":"img1.png"}, ...]
+  `correct_answer` VARCHAR(255),
+  `level` ENUM('easy','medium','hard') DEFAULT 'easy',
+  `type` ENUM('multiple_choice', 'drag_drop', 'matching') DEFAULT 'multiple_choice', -- Mở rộng loại câu hỏi
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`lesson_id`) REFERENCES `lessons`(`lesson_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `json_options_check` CHECK (JSON_VALID(`options`))
+);
+
+-- 7. TESTS
+CREATE TABLE `tests` (
+  `test_id` INT AUTO_INCREMENT PRIMARY KEY,
+  `title` VARCHAR(100) NOT NULL,
+  `lesson_id` INT,
+  `duration` INT COMMENT 'Thời gian làm bài (phút)',
+  `created_by` INT,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`lesson_id`) REFERENCES `lessons`(`lesson_id`)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+  FOREIGN KEY (`created_by`) REFERENCES `users`(`user_id`)
+    ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+-- 8. TEST_EXERCISES
+CREATE TABLE `test_exercises` (
+  `test_id` INT NOT NULL,
+  `exercise_id` INT NOT NULL,
+  `seq` INT DEFAULT 1 COMMENT 'Thứ tự câu hỏi',
+  PRIMARY KEY (`test_id`, `exercise_id`),
+  FOREIGN KEY (`test_id`) REFERENCES `tests`(`test_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY (`exercise_id`) REFERENCES `exercises`(`exercise_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- 9. TEST_RESULTS
+CREATE TABLE `test_results` (
+  `result_id` INT AUTO_INCREMENT PRIMARY KEY,
+  `test_id` INT NOT NULL,
+  `student_id` INT NOT NULL,
+  `score` FLOAT DEFAULT 0,
+  `total_questions` INT,
+  `correct_count` INT,
+  `time_spent` INT COMMENT 'Thời gian hoàn thành (giây)',
+  `submitted_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `teacher_feedback` TEXT, -- Lời phê của giáo viên (hoặc feedback tự động: "Bé giỏi lắm!")
+  FOREIGN KEY (`test_id`) REFERENCES `tests`(`test_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY (`student_id`) REFERENCES `students`(`user_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- 10. PROGRESS_TRACKING
+CREATE TABLE `progress_tracking` (
+  `track_id` INT AUTO_INCREMENT PRIMARY KEY,
+  `student_id` INT NOT NULL,
+  `lesson_id` INT NOT NULL,
+  `status` ENUM('not_started','in_progress','completed') DEFAULT 'not_started',
+  `last_accessed` DATETIME,
+  `streak_days` INT DEFAULT 0,
+  `total_time_spent` INT DEFAULT 0 COMMENT 'Tổng thời gian học (phút)',
+  FOREIGN KEY (`student_id`) REFERENCES `students`(`user_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY (`lesson_id`) REFERENCES `lessons`(`lesson_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  UNIQUE KEY `unique_progress` (`student_id`, `lesson_id`)
+);
+
+-- 11. PARENT_NOTIFICATIONS
+CREATE TABLE `parent_notifications` (
+  `notification_id` INT AUTO_INCREMENT PRIMARY KEY,
+  `student_id` INT NOT NULL,
+  `parent_id` INT NOT NULL,
+  `message` TEXT NOT NULL,
+  `type` ENUM('progress','test_result','reminder', 'system') DEFAULT 'progress',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `is_read` TINYINT(1) DEFAULT 0,
+  FOREIGN KEY (`student_id`) REFERENCES `students`(`user_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY (`parent_id`) REFERENCES `parents`(`user_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- 12. REWARDS (Hệ thống đổi thưởng)
+CREATE TABLE `rewards` (
+  `reward_id` INT AUTO_INCREMENT PRIMARY KEY,
+  `student_id` INT NOT NULL,
+  `reward_title` VARCHAR(100) NOT NULL, -- Ví dụ: "Huy hiệu Bé ngoan", "Sticker Siêu nhân"
+  `image_url` VARCHAR(255), -- Hình ảnh phần thưởng
+  `reason` VARCHAR(255),
+  `date_awarded` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`student_id`) REFERENCES `students`(`user_id`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- 13. LOGS
+CREATE TABLE `logs` (
+  `log_id` INT AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT,
+  `action` VARCHAR(255) NOT NULL,
+  `ip_address` VARCHAR(45), -- Thêm IP để bảo mật
+  `timestamp` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `details` TEXT,
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`user_id`)
+    ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+-- 14. DỮ LIỆU MẪU (SEED DATA)
+-- Reset auto increment cho sạch đẹp
+ALTER TABLE users AUTO_INCREMENT = 1;
+
+INSERT INTO users (username, password_hash, full_name, role, email) VALUES
+('teacher01', '$2y$10$dummieshash...', 'Cô Giáo Hạnh', 'teacher', 'hanh@school.com'),
+('parent01', '$2y$10$dummieshash...', 'Mẹ Bé Bi', 'parent', 'mebi@family.com'),
+('student01', '$2y$10$dummieshash...', 'Bé Bi (5 tuổi)', 'student', NULL); -- Trẻ em có thể không có email
+
+INSERT INTO teachers (user_id, subject, bio) 
+VALUES ((SELECT user_id FROM users WHERE username='teacher01'), 'Toán Tư Duy', '5 năm kinh nghiệm dạy trẻ');
+
+INSERT INTO parents (user_id) 
+VALUES ((SELECT user_id FROM users WHERE username='parent01'));
+
+INSERT INTO students (user_id, class_name, parent_id, teacher_id, quick_login_code, total_stars)
+VALUES (
+  (SELECT user_id FROM users WHERE username='student01'),
+  'MamNon_5A',
+  (SELECT user_id FROM users WHERE username='parent01'),
+  (SELECT user_id FROM users WHERE username='teacher01'),
+  '1234', -- Mã PIN cho bé
+  10
+);
